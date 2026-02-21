@@ -1,15 +1,22 @@
 module.exports = async (req, res) => {
-  // 어떤 사이트에서도 형님의 서버에 접속할 수 있게 문을 열어줍니다
+  // 어떤 사이트에서도 접속할 수 있게 문을 열어줍니다
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  // 브라우저에서 그냥 접속하거나 미리보기 요청(OPTIONS)일 때 처리
+  if (req.method === 'OPTIONS' || req.method === 'GET') {
+    return res.status(200).send("번역 서버가 정상 가동 중입니다. 사냥을 시작하세요!");
+  }
 
-  const { text, target_lang, auth_key } = req.body;
+  // 데이터 추출 (데이터가 없을 경우를 대비해 빈 객체 기본값 설정)
+  const { text, target_lang, auth_key } = req.body || {};
+
+  if (!text || !auth_key) {
+    return res.status(400).json({ error: "필수 데이터(text, auth_key)가 누락되었습니다." });
+  }
 
   try {
-    // 외부 도구(axios) 없이 바로 딥엘(DeepL)에 요청을 쏩니다
     const response = await fetch('https://api-free.deepl.com/v2/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
